@@ -7,6 +7,8 @@ import hashlib
 from collections import OrderedDict, defaultdict
 from util import *
 class BACFile(OrderedDict):
+    def toJSON(self):
+        return json.dumps(self, indent=5)
     def __init__(self, filename):
         super(BACFile, self).__init__()
         global MODE,ScriptNames,VFXScriptNames
@@ -39,7 +41,7 @@ class BACFile(OrderedDict):
             offset = struct.unpack(MODE + "I", f.read(4))[0]
             if offset == 0:
                 continue
-            self["Scripts"][i] = self.readScript(f,offset,ScriptNames[i])
+            self["Scripts"][ScriptNames[i]] = self.readScript(f,offset,ScriptNames[i])
 
         '''Read VFXScripts'''
         self["VFXScripts"] = OrderedDict()
@@ -48,7 +50,7 @@ class BACFile(OrderedDict):
             offset = struct.unpack(MODE + "I", f.read(4))[0]
             if offset == 0:
                 continue
-            self["VFXScripts"][i] = self.readScript(f,offset,VFXScriptNames[i])
+            self["VFXScripts"][VFXScriptNames[i]] = self.readScript(f,offset,VFXScriptNames[i])
         '''Read HitBoxTable'''
         self["HitboxTable"] = OrderedDict()
         for i in range(0,HEADER[2]):
@@ -131,24 +133,25 @@ class BACFile(OrderedDict):
         for i in range(0,CommandListCount):
             f.seek(BaseOffset+12*i)
 
-            commandList = OrderedDict()
+            #commandList = OrderedDict()
+            commandList = []
             type = ["FLOW","ANIMATION","TRANSITION","STATE","SPEED","PHYSICS","CANCELS","HITBOX","INVINC","HURTBOX","ETC","TARGETLOCK","SFX"][struct.unpack(MODE + "H", f.read(2))[0]]
             CommandCount = struct.unpack(MODE + "H", f.read(2))[0]
             script["CommandLists"][type] = commandList
 
             FrameOffset = struct.unpack(MODE + "I", f.read(4))[0]
             DataOffset = struct.unpack(MODE + "I", f.read(4))[0]
-            commandList["Commands"] = []
+            
             for j in range(0,CommandCount):
                 command = OrderedDict()
                 f.seek(BaseOffset+ FrameOffset+12*i+j*4)
                 command["StartFrame"] = struct.unpack(MODE + "H", f.read(2))[0]
                 command["EndFrame"] = struct.unpack(MODE + "H", f.read(2))[0]
 
-                commandList["Commands"].append(command)
+                commandList.append(command)
             f.seek(BaseOffset+DataOffset+12*i)
             for j in range(0,CommandCount):
-                command = commandList["Commands"][j]
+                command = commandList[j]
                 if type == "FLOW":
                     command["Type"] = struct.unpack(MODE + "h", f.read(2))[0]
                     command["Input"] = struct.unpack(MODE + "H", f.read(2))[0]
@@ -268,9 +271,17 @@ def doAll():
 
 def doChar(c):
     pc = BACFile(PC_PATH + c + "\\" + c + ".bac")
+    f = open("../json/"+c+".json.txt", "w")
+    pctxt = pc.toJSON()
+    print( "Writing diff")
+    f.write(pctxt)
+    f.close()
+    print( "DONE")
+def diffChar(c):
+    pc = BACFile(PC_PATH + c + "\\" + c + ".bac")
     xbox = BACFile(XBOX_PATH + c + "\\" + c + ".bac")
     htmlDiff = difflib.HtmlDiff()
-    f = open("diff.html", "w")
+    f = open("diff.txt", "w")
     pctxt = json.dumps(pc.Floats, indent=5).splitlines()+json.dumps(pc.Scripts, indent=5).splitlines()+json.dumps(pc.VFXScripts, indent=5).splitlines()+json.dumps(pc.HitboxTable, indent=5).splitlines()
     xboxtxt = json.dumps(xbox.Floats, indent=5).splitlines()+json.dumps(xbox.Scripts, indent=5).splitlines()+json.dumps(xbox.VFXScripts, indent=5).splitlines()+json.dumps(xbox.HitboxTable, indent=5).splitlines()
     print( "Writing diff")

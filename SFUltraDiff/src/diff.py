@@ -54,8 +54,10 @@ HEADER = '''
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">{1}<b class="caret"></b></a>
               <ul class="dropdown-menu">
+                <li><a href="{0}_VANILLA_TO_SUPER.html">VANILLA_TO_SUPER</a></li>
                 <li><a href="{0}_SUPER_TO_AE.html">SUPER_TO_AE</a></li>
                 <li><a href="{0}_AE_TO_AE2012.html">AE_TO_AE2012</a></li>
+                <li><a href="{0}_AE2012_TO_ULTRA.html">AE2012_TO_ULTRA</a></li>
               </ul>
             </li>
             <li class="divider"></li>
@@ -88,41 +90,41 @@ HEADER = '''
 <div class= "container-fluid" style="padding-top:60px">
     <div class='col-md-2'>
             <div class="list-group">
-<a href="ADN_SUPER_TO_AE.html" class="list-group-item">ADN</a>
-<a href="AGL_SUPER_TO_AE.html" class="list-group-item">AGL</a>
-<a href="BLK_SUPER_TO_AE.html" class="list-group-item">BLK</a>
-<a href="BLR_SUPER_TO_AE.html" class="list-group-item">BLR</a>
-<a href="BOS_SUPER_TO_AE.html" class="list-group-item">BOS</a>
-<a href="BSN_SUPER_TO_AE.html" class="list-group-item">BSN</a>
-<a href="CDY_SUPER_TO_AE.html" class="list-group-item">CDY</a>
-<a href="CHB_SUPER_TO_AE.html" class="list-group-item">CHB</a>
-<a href="CMY_SUPER_TO_AE.html" class="list-group-item">CMY</a>
-<a href="CNL_SUPER_TO_AE.html" class="list-group-item">CNL</a>
-<a href="DAN_SUPER_TO_AE.html" class="list-group-item">DAN</a>
-<a href="DDL_SUPER_TO_AE.html" class="list-group-item">DDL</a>
-<a href="DJY_SUPER_TO_AE.html" class="list-group-item">DJY</a>
-<a href="DSM_SUPER_TO_AE.html" class="list-group-item">DSM</a>
-<a href="FLN_SUPER_TO_AE.html" class="list-group-item">FLN</a>
-<a href="GEN_SUPER_TO_AE.html" class="list-group-item">GEN</a>
-<a href="GKI_SUPER_TO_AE.html" class="list-group-item">GKI</a>
-<a href="GKN_SUPER_TO_AE.html" class="list-group-item">GKN</a>
-<a href="GUL_SUPER_TO_AE.html" class="list-group-item">GUL</a>
-<a href="GUY_SUPER_TO_AE.html" class="list-group-item">GUY</a>
-<a href="HKN_SUPER_TO_AE.html" class="list-group-item">HKN</a>
-<a href="HND_SUPER_TO_AE.html" class="list-group-item">HND</a>
-<a href="HWK_SUPER_TO_AE.html" class="list-group-item">HWK</a>
-<a href="IBK_SUPER_TO_AE.html" class="list-group-item">IBK</a>
-<a href="JHA_SUPER_TO_AE.html" class="list-group-item">JHA</a>
-<a href="JRI_SUPER_TO_AE.html" class="list-group-item">JRI</a>
-<a href="KEN_SUPER_TO_AE.html" class="list-group-item">KEN</a>
-<a href="MKT_SUPER_TO_AE.html" class="list-group-item">MKT</a>
-<a href="RIC_SUPER_TO_AE.html" class="list-group-item">RIC</a>
-<a href="ROS_SUPER_TO_AE.html" class="list-group-item">ROS</a>
-<a href="RYU_SUPER_TO_AE.html" class="list-group-item">RYU</a>
-<a href="SGT_SUPER_TO_AE.html" class="list-group-item">SGT</a>
-<a href="SKR_SUPER_TO_AE.html" class="list-group-item">SKR</a>
-<a href="VEG_SUPER_TO_AE.html" class="list-group-item">VEG</a>
-<a href="ZGF_SUPER_TO_AE.html" class="list-group-item">ZGF</a>
+<a href="ADN_VANILLA_TO_SUPER.html" class="list-group-item">ADN</a>
+<a href="AGL_VANILLA_TO_SUPER.html" class="list-group-item">AGL</a>
+<a href="BLK_VANILLA_TO_SUPER.html" class="list-group-item">BLK</a>
+<a href="BLR_VANILLA_TO_SUPER.html" class="list-group-item">BLR</a>
+<a href="BOS_VANILLA_TO_SUPER.html" class="list-group-item">BOS</a>
+<a href="BSN_VANILLA_TO_SUPER.html" class="list-group-item">BSN</a>
+<a href="CDY_VANILLA_TO_SUPER.html" class="list-group-item">CDY</a>
+<a href="CHB_VANILLA_TO_SUPER.html" class="list-group-item">CHB</a>
+<a href="CMY_VANILLA_TO_SUPER.html" class="list-group-item">CMY</a>
+<a href="CNL_VANILLA_TO_SUPER.html" class="list-group-item">CNL</a>
+<a href="DAN_VANILLA_TO_SUPER.html" class="list-group-item">DAN</a>
+<a href="DDL_VANILLA_TO_SUPER.html" class="list-group-item">DDL</a>
+<a href="DJY_VANILLA_TO_SUPER.html" class="list-group-item">DJY</a>
+<a href="DSM_VANILLA_TO_SUPER.html" class="list-group-item">DSM</a>
+<a href="FLN_VANILLA_TO_SUPER.html" class="list-group-item">FLN</a>
+<a href="GEN_VANILLA_TO_SUPER.html" class="list-group-item">GEN</a>
+<a href="GKI_VANILLA_TO_SUPER.html" class="list-group-item">GKI</a>
+<a href="GKN_VANILLA_TO_SUPER.html" class="list-group-item">GKN</a>
+<a href="GUL_VANILLA_TO_SUPER.html" class="list-group-item">GUL</a>
+<a href="GUY_VANILLA_TO_SUPER.html" class="list-group-item">GUY</a>
+<a href="HKN_VANILLA_TO_SUPER.html" class="list-group-item">HKN</a>
+<a href="HND_VANILLA_TO_SUPER.html" class="list-group-item">HND</a>
+<a href="HWK_VANILLA_TO_SUPER.html" class="list-group-item">HWK</a>
+<a href="IBK_VANILLA_TO_SUPER.html" class="list-group-item">IBK</a>
+<a href="JHA_VANILLA_TO_SUPER.html" class="list-group-item">JHA</a>
+<a href="JRI_VANILLA_TO_SUPER.html" class="list-group-item">JRI</a>
+<a href="KEN_VANILLA_TO_SUPER.html" class="list-group-item">KEN</a>
+<a href="MKT_VANILLA_TO_SUPER.html" class="list-group-item">MKT</a>
+<a href="RIC_VANILLA_TO_SUPER.html" class="list-group-item">RIC</a>
+<a href="ROS_VANILLA_TO_SUPER.html" class="list-group-item">ROS</a>
+<a href="RYU_VANILLA_TO_SUPER.html" class="list-group-item">RYU</a>
+<a href="SGT_VANILLA_TO_SUPER.html" class="list-group-item">SGT</a>
+<a href="SKR_VANILLA_TO_SUPER.html" class="list-group-item">SKR</a>
+<a href="VEG_VANILLA_TO_SUPER.html" class="list-group-item">VEG</a>
+<a href="ZGF_VANILLA_TO_SUPER.html" class="list-group-item">ZGF</a>
             </div>
     </div>
     <div class='col-md-10'>
@@ -194,6 +196,7 @@ def diffCollections(col1,col2,log,level=0):
         if repr(col1[both]) == repr(col2[both]):
             continue
         fancyName = both
+        
         try:
             fancyName = col2[both]["Name"]
         except Exception:
@@ -220,17 +223,40 @@ def diffCollections(col1,col2,log,level=0):
                 log.write("</pre></div>")
                 log.write("</div>")
         log.write("</div></div>")
+def dumpChar(char):
+    postfix = char+"\\"+char
+    SUPER = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\resource\\battle\\chara\\"
+    AE = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\dlc\\03_character_free\\battle\\regulation\\latest\\"
+    AE2012 = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\patch\\battle\\regulation\\latest_ae\\"
+    version_names = ["SUPER","AE","AE2012"]
+    versions = [SUPER,AE,AE2012]
+    for i,ver in enumerate(versions):
 
+        log = open("../html/json/"+char+"."+version_names[i]+".bac.txt","w")
+        BAC= bac.BACFile(versions[i]+postfix+".bac")
+        log.write(BAC.toJSON())
+        log.close()
+        log = open("../html/json/"+char+"."+version_names[i]+".bcm.txt","w")
+        BCM= bcm.BCMFile(versions[i]+postfix+".bcm")
+        log.write(BCM.toJSON())
+        log.close()
+        
+    
 def compareChar(char):
     postfix = char+"\\"+char
 
+    VANILLA = "M:\\Xbox\\Ultra Xbox\\content\\04_ae2\\battle\\regulation\\sf4\\"
     SUPER = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\resource\\battle\\chara\\"
     AE = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\dlc\\03_character_free\\battle\\regulation\\latest\\"
-    AE2012 = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\patch_1_06\\battle\\regulation\\latest_ae\\"
-
-    versions = [SUPER,AE,AE2012]
+    AE2012 = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\patch\\battle\\regulation\\latest_ae\\"
+    ULTRA = "M:\\Xbox\\Ultra Xbox\\content\\04_ae2\\battle\\regulation\\ae2\\"
+    versions = [VANILLA,SUPER,AE,AE2012,ULTRA]
     for i in range(0,len(versions)-1):
-        name = ["SUPER_TO_AE","AE_TO_AE2012"][i]
+        names = ["VANILLA","SUPER","AE","AE2012","ULTRA"]
+        name = names[i]+"_TO_"+names[i+1]
+        print("Doing ",name)
+        if not os.path.isfile(versions[i]+postfix+".bac"):
+            continue
         log = open("../html/"+char+"_"+name+".html","w")
         log.write(HEADER.format(char,name))
         firstBAC= bac.BACFile(versions[i]+postfix+".bac")
@@ -287,8 +313,8 @@ def compareChar(char):
 
 
 import os
-compareChar("RYU")
-#for char in os.listdir(util.PC_PATH):
-#   print(char)
-#    compareChar(char)
+#compareChar("RYU")
+for char in os.listdir(util.PC_PATH):
+   print(char)
+   compareChar(char)
 

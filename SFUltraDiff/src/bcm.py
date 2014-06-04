@@ -6,8 +6,19 @@ import fnmatch
 import hashlib
 from util import *
 from collections import OrderedDict,defaultdict
-
+InputEnum = { 0:"None",0x1:"NEUTRAL",0x2:"UP",0x4:"DOWN",0x8:"BACK",0x10:"FORWARD", \
+              0x40:"LP",0x80:"MP",0x100:"HP",0x200:"LK",0x400:"MK",0x800:"HK"}
+def flags(set,data):
+    s = []
+    for thing,label in set.items():
+        if thing == 0 and data == 0:
+            s.append(label)
+        elif data & thing:
+            s.append(label)
+    return "|".join(s)
 class BCMFile(OrderedDict):
+    def toJSON(self):
+        return json.dumps(self, indent=5)
     def __init__(self,filename):
         super(BCMFile, self).__init__()
         global MODE
@@ -54,21 +65,20 @@ class BCMFile(OrderedDict):
         self["Inputs"] = {}
         for i in range(0,HEADER[1]):
             f.seek(HEADER[6]+i*0xC4)
-            input = {}
-            input["Entries"] = []
+            input = []
             #input["Name"] = InputNames[i]
             count =  struct.unpack(MODE+"I",f.read(4))[0]
             for j in range(0,count):
                 entry = {}
-                entry["Type"] = struct.unpack(MODE+"H",f.read(2))[0]
+                entry["Type"] = ["NORMAL","CHARGE","360","MASH"][struct.unpack(MODE+"H",f.read(2))[0]]
                 entry["Buffer"] = struct.unpack(MODE+"H",f.read(2))[0]
-                entry["Input"] = struct.unpack(MODE+"H",f.read(2))[0]
+                entry["Input"] = flags(InputEnum,struct.unpack(MODE+"H",f.read(2))[0])
 
                 entry["MoveFlags"] = struct.unpack(MODE+"H",f.read(2))[0]
                 entry["Flags"] = struct.unpack(MODE+"H",f.read(2))[0]
-                entry["Requirement"] = struct.unpack(MODE+"H",f.read(2))[0]
+                entry["Requirement"] = flags({0:"Normal",1:"Lenient",2:"Mash"},struct.unpack(MODE+"H",f.read(2))[0])
 
-                input["Entries"].append(entry)
+                input.append(entry)
             self["Inputs"][InputNames[i]] = input
         '''Read MOVES'''
 
@@ -77,14 +87,14 @@ class BCMFile(OrderedDict):
             f.seek(HEADER[8]+i*0x54)
             moves= OrderedDict()
             #charge["Name"] = ChargeNames[i]
-            moves["Input"] = struct.unpack(MODE+"H",f.read(2))[0]
+            moves["Input"] = flags(InputEnum,struct.unpack(MODE+"H",f.read(2))[0])
             moves["MoveFlags"] = struct.unpack(MODE+"H",f.read(2))[0]
             moves["PositionRestriction"] = struct.unpack(MODE+"H",f.read(2))[0]
             moves["Restriction"] = struct.unpack(MODE+"H",f.read(2))[0]
             moves["Unknown1"] = struct.unpack(MODE+"H",f.read(2))[0]
             moves["StateRestriction"] = struct.unpack(MODE+"H",f.read(2))[0]
             moves["Unknown2"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["MiscRestriction"] = struct.unpack(MODE+"B",f.read(1))
+            moves["MiscRestriction"] = struct.unpack(MODE+"B",f.read(1))[0]
             moves["Unknown3"] = struct.unpack(MODE+"B",f.read(1))[0]
             moves["UltraRestriction"] = struct.unpack(MODE+"B",f.read(1))[0]
             moves["UltraRestriction?"] = struct.unpack(MODE+"3B",f.read(3))[0]
@@ -93,10 +103,14 @@ class BCMFile(OrderedDict):
             moves["EXCost"] = struct.unpack(MODE+"H",f.read(2))[0]
             moves["UltraRequirement"] = struct.unpack(MODE+"H",f.read(2))[0]
             moves["UltraCost"] = struct.unpack(MODE+"H",f.read(2))[0]
+            
             moves["InputMotion"] = struct.unpack(MODE+"i",f.read(4))[0]
+            if moves["InputMotion"] != -1:
+                moves["InputMotion"] = InputNames[moves["InputMotion"]]
+                '''
             moves["AIMoveFeatures"] = struct.unpack(MODE+"I",f.read(4))[0]
             moves["AIMinRange"] = struct.unpack(MODE+"f",f.read(4))[0]
-            moves["AIMarange"] = struct.unpack(MODE+"f",f.read(4))[0]
+            moves["AIMaxrange"] = struct.unpack(MODE+"f",f.read(4))[0]
             moves["AIUnknown1"] = struct.unpack(MODE+"I",f.read(4))[0]
             moves["CPUPassiveMove"] = struct.unpack(MODE+"I",f.read(4))[0]
             moves["CPUCounterMove"] = struct.unpack(MODE+"H",f.read(2))[0]
@@ -110,6 +124,7 @@ class BCMFile(OrderedDict):
             moves["CPUVsMidRange"] = struct.unpack(MODE+"H",f.read(2))[0]
             moves["CPUVsFar"] = struct.unpack(MODE+"H",f.read(2))[0]
             moves["CPUVsVeryFar"] = struct.unpack(MODE+"H",f.read(2))[0]
+            '''
 
             self["Moves"][MoveNames[i]] = moves
         '''Read Cancels'''
