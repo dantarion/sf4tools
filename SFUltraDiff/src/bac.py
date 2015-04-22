@@ -4,14 +4,36 @@ import difflib
 import json
 import fnmatch
 import hashlib
+import bcm
 from collections import OrderedDict, defaultdict
 from util import *
 class BACFile(OrderedDict):
     def toJSON(self):
         return json.dumps(self, indent=5)
+    @staticmethod
+    def readNames(filename):
+        global MODE
+        f = open(filename, "rb")
+        #print( "----------------------------------------- ", filename)
+        TAG = f.read(4)
+        if(TAG != b"#BAC"):
+            raise Exception("Don't think this is a BAC File..." + str(TAG))
+        EndianFlag = struct.unpack("H", f.read(2))[0]
+        if(EndianFlag == 0xFFFE):
+            MODE = "<"
+        else:
+            MODE = ">"
+        f.seek(12)
+        HEADER = struct.unpack(MODE + "HHHH5I", f.read(28))
+        json.dumps(HEADER, indent=5)
+
+        ScriptNames = readNameOffsetTable(f, HEADER[6], HEADER[0], MODE)
+        VFXScriptNames = readNameOffsetTable(f, HEADER[7], HEADER[1], MODE)
+        return ScriptNames,VFXScriptNames
+        
     def __init__(self, filename):
         super(BACFile, self).__init__()
-        global MODE,ScriptNames,VFXScriptNames
+        global MODE,ScriptNames,VFXScriptNames,ChargeNames,InputNames,MoveNames,CancelListNames
         f = open(filename, "rb")
         #print( "----------------------------------------- ", filename)
         TAG = f.read(4)
@@ -33,6 +55,7 @@ class BACFile(OrderedDict):
 
         ScriptNames = readNameOffsetTable(f, HEADER[6], HEADER[0], MODE)
         VFXScriptNames = readNameOffsetTable(f, HEADER[7], HEADER[1], MODE)
+        ChargeNames,InputNames,MoveNames,CancelListNames = bcm.BCMFile.readNames((filename[0:-4]+".bcm"))
         '''Read Scripts'''
         self["HitBoxUsage"] = defaultdict(set)
         self["Scripts"] = OrderedDict()
@@ -75,7 +98,17 @@ class BACFile(OrderedDict):
                 data["Stun"] = struct.unpack(MODE + "h", f.read(2))[0]
                 data["Effect"] = ["HIT","SCRIPT","BLOCK","BLOCK2","BLOW","BLOW2","BOUND","BOUND2"][struct.unpack(MODE + "h", f.read(2))[0]]
                 data["OnHit"] = struct.unpack(MODE + "h", f.read(2))[0]
-
+                if data["Effect"] == "HIT":
+                    idx = 0x83
+                elif data["Effect"] == "BLOCK":
+                    idx = 0x44
+                elif data["Effect"] == "BLOW":
+                    idx = 0xC0
+                elif data["Effect"] == "BOUND":
+                    idx = 0x1A
+                else:
+                    idx = 0
+                data["OnHit"] = enum(dict(enumerate(ScriptNames)),data["OnHit"]+idx)
                 data["SelfHitstop"] = struct.unpack(MODE + "h", f.read(2))[0]
                 data["SelfShaking"] = struct.unpack(MODE + "h", f.read(2))[0]
                 data["TargetHitstop"] = struct.unpack(MODE + "h", f.read(2))[0]
@@ -112,7 +145,7 @@ class BACFile(OrderedDict):
 
 
     def readScript(self,f,offset,name):
-        global MODE
+        global MODE,ScriptNames,VFXScriptNames,ChargeNames,InputNames,MoveNames,CancelListNames
         f.seek(offset)
         script = OrderedDict()
         script["Name"] = name
@@ -124,9 +157,11 @@ class BACFile(OrderedDict):
         script["UnknownFlags1"] = struct.unpack(MODE + "I", f.read(4))[0]
         script["UnknownFlags2"] = struct.unpack(MODE + "HH", f.read(4))[0]
         script["UnknownFlags3"] = struct.unpack(MODE + "H", f.read(2))[0]
+        
         CommandListCount = struct.unpack(MODE + "H", f.read(2))[0]
 
-        script["HeaderSize"] = struct.unpack(MODE + "I", f.read(4))[0]
+        #script["HeaderSize"] = 
+        struct.unpack(MODE + "I", f.read(4))[0]
         BaseOffset = f.tell()
 
         script["CommandLists"] = OrderedDict()
@@ -153,26 +188,27 @@ class BACFile(OrderedDict):
             for j in range(0,CommandCount):
                 command = commandList[j]
                 if type == "FLOW":
-                    command["Type"] = struct.unpack(MODE + "h", f.read(2))[0]
+                    command["Type"] = enum(FlowType,struct.unpack(MODE + "h", f.read(2))[0])
                     command["Input"] = struct.unpack(MODE + "H", f.read(2))[0]
-                    command["TargetScript"] = struct.unpack(MODE + "h", f.read(2))[0]
+                    command["TargetScript"] = enum(dict(enumerate(ScriptNames)),struct.unpack(MODE + "h", f.read(2))[0])
                     command["TargetScriptFrame"] = struct.unpack(MODE + "h", f.read(2))[0]
                 elif type == "ANIMATION":
                     command["Animation"] = struct.unpack(MODE + "H", f.read(2))[0]
-                    command["Flags"] = struct.unpack(MODE + "BB", f.read(2))
+                    command["AnimationType"] = enum(AnimationType,struct.unpack(MODE + "B", f.read(1))[0])
+                    command["Unknown"] = struct.unpack(MODE + "B", f.read(1))[0]
                     command["AnimationFrameStart"] = struct.unpack(MODE + "h", f.read(2))[0]
                     command["AnimationFrameEnd"] = struct.unpack(MODE + "h", f.read(2))[0]
                 elif type == "TRANSITION":
                     command["Flag1"] = struct.unpack(MODE + "HH", f.read(4))
                     command["Floats"] = struct.unpack(MODE + "5fI", f.read(24))
                 elif type == "STATE":
-                    command["Flag1"] = struct.unpack(MODE + "I", f.read(4))[0]
+                    command["Flag1"] = flags(StateFlags,struct.unpack(MODE + "I", f.read(4))[0])
                     command["Flag2"] = struct.unpack(MODE + "I", f.read(4))[0]
                 elif type == "SPEED":
                     command["Multiplier"] = struct.unpack(MODE + "f", f.read(4))[0]
                 elif type == "CANCELS":
                     command["Condition"] = struct.unpack(MODE + "I", f.read(4))[0]
-                    command["CancelList"] = struct.unpack(MODE + "I", f.read(4))[0]
+                    command["CancelList"] = enum(dict(enumerate(CancelListNames)),struct.unpack(MODE + "I", f.read(4))[0])
                 elif type == "HURTBOX":
                     command["X"] = struct.unpack(MODE + "f", f.read(4))[0]
                     command["Y"] = struct.unpack(MODE + "f", f.read(4))[0]
@@ -192,21 +228,27 @@ class BACFile(OrderedDict):
                     command["AccelerationY"] = struct.unpack(MODE + "f", f.read(4))[0]
                     command["UnknownBytes"] = struct.unpack(MODE + "2I", f.read(8))
                 elif type == "ETC":
-                    command["EtcType"] = struct.unpack(MODE + "H", f.read(2))[0]
-                    command["ShortParam"] = struct.unpack(MODE + "H", f.read(2))[0]
+                    
+                    command["CommandType"] = enum({0:"CONTROL",5:"GFX",6:"GFX2"},struct.unpack(MODE + "H", f.read(2))[0])
+                    if command["CommandType"] == "CONTROL":
+                        command["ControlType"] = enum({0:"UNKNOWN",2:"VFX_SCRIPT",5:"SUPERFLASH",6:"THROW_TECH",\
+                                        11:"STICK_MOVEMENT",12:"AIR_TRACKING",13:"MOVE_TO_WALL", 14:"TELEPORT", 15:"DROP_KNIFE",28:"ANGRY_SCAR"}, \
+                                        struct.unpack(MODE + "H", f.read(2))[0])
+                    else:
+                        command["ControlType"] = struct.unpack(MODE + "H", f.read(2))[0]
                     command["RawParams"] = struct.unpack(MODE + "7I", f.read(28))
                 elif type == "HITBOX":
                     command["X"] = struct.unpack(MODE + "f", f.read(4))[0]
                     command["Y"] = struct.unpack(MODE + "f", f.read(4))[0]
-                    command["Rotation"] = struct.unpack(MODE + "f", f.read(4))[0]
+                    command["Z?"] = struct.unpack(MODE + "f", f.read(4))[0]
                     command["Width"] = struct.unpack(MODE + "f", f.read(4))[0]
                     command["Height"] = struct.unpack(MODE + "f", f.read(4))[0]
-                    command["Unused"] = struct.unpack(MODE + "I", f.read(4))[0]
+                    command["Depth?"] = struct.unpack(MODE + "I", f.read(4))[0]
                     command["ID"] = struct.unpack(MODE + "B", f.read(1))[0]
                     command["Juggle"] = struct.unpack(MODE + "B", f.read(1))[0]
                     command["Type"] = ["PROXIMITY","NORMAL","GRAB","PROJECTILE","REFLECT"][struct.unpack(MODE + "B", f.read(1))[0]]
-                    command["HitLevel"] = struct.unpack(MODE + "B", f.read(1))[0]
-                    command["HitFlags"] = struct.unpack(MODE + "H", f.read(2))[0]
+                    command["HitLevel"] = ["MID","OVERHEAD","LOW","UNBLOCKABLE","AIR_ONLY"][struct.unpack(MODE + "B", f.read(1))[0]]
+                    command["HitFlags"] = flags(HitboxFlags,struct.unpack(MODE + "H", f.read(2))[0])
                     command["Unknown1"] = struct.unpack(MODE + "B", f.read(1))[0]
                     command["Unknown2"] = struct.unpack(MODE + "B", f.read(1))[0]
                     command["Hits"] = struct.unpack(MODE + "B", f.read(1))[0]
@@ -221,8 +263,8 @@ class BACFile(OrderedDict):
                         self["HitBoxUsage"][command["HitboxData"]].add("{0}#{1}".format(name,command["ID"]))
 
                 elif type == "INVINC":
-                    command["Flags"] = struct.unpack(MODE + "I", f.read(4))[0]
-                    command["Location"] = struct.unpack(MODE + "I", f.read(4))[0]
+                    command["Flags"] = flags(VulFlags,struct.unpack(MODE + "I", f.read(4))[0])
+                    command["Exception"] = flags(BodyFlags,struct.unpack(MODE + "I", f.read(4))[0])
                     command["Unknown"] = struct.unpack(MODE + "4B2H", f.read(8))
                 elif type == "TARGETLOCK":
                     command["Type"] = struct.unpack(MODE + "i", f.read(4))[0]
@@ -232,7 +274,8 @@ class BACFile(OrderedDict):
                     command["Type"] = struct.unpack(MODE + "H", f.read(2))[0]
                     command["Sound"] = struct.unpack(MODE + "H", f.read(2))[0]
                     command["Unknown"] = struct.unpack(MODE + "3i", f.read(12))
-
+                else:
+                    raise Exception(type)
         return script
 def doAll():
     for char in os.listdir(PC_PATH):

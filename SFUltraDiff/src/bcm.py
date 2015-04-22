@@ -4,22 +4,39 @@ import difflib
 import json
 import fnmatch
 import hashlib
+import bac
 from util import *
 from collections import OrderedDict,defaultdict
-InputEnum = { 0:"None",0x1:"NEUTRAL",0x2:"UP",0x4:"DOWN",0x8:"BACK",0x10:"FORWARD", \
-              0x40:"LP",0x80:"MP",0x100:"HP",0x200:"LK",0x400:"MK",0x800:"HK"}
-def flags(set,data):
-    s = []
-    for thing,label in set.items():
-        if thing == 0 and data == 0:
-            s.append(label)
-        elif data & thing:
-            s.append(label)
-    return "|".join(s)
+
 class BCMFile(OrderedDict):
     def toJSON(self):
         return json.dumps(self, indent=5)
+    @staticmethod
+    def readNames(filename):
+        global MODE,PRETTY
+        f = open(filename,"rb")
+        #print( "----------------------------------------- ",filename)
+        TAG = f.read(4)
+        if(TAG != b"#BCM"):
+            raise Exception(b"Don't think this is a BCM File..."+TAG)
+        EndianFlag = struct.unpack("H",f.read(2))[0]
+        if(EndianFlag == 0xFFFE):
+            MODE = "<"
+        else:
+            MODE = ">"
+        struct.unpack(MODE+"HHHHH",f.read(10))
+
+        HEADER = struct.unpack(MODE+"4H8I",f.read(40))
+        #hexprint((HEADER))
+
+        ChargeNames = readNameOffsetTable(f,HEADER[5],HEADER[0],MODE)
+        InputNames = readNameOffsetTable(f,HEADER[7],HEADER[1],MODE)
+        MoveNames = readNameOffsetTable(f,HEADER[9],HEADER[2],MODE)
+        CancelListNames = readNameOffsetTable(f,HEADER[11],HEADER[3],MODE)
+        return ChargeNames,InputNames,MoveNames,CancelListNames
+     
     def __init__(self,filename):
+        print( filename)
         super(BCMFile, self).__init__()
         global MODE
         f = open(filename,"rb")
@@ -41,14 +58,14 @@ class BCMFile(OrderedDict):
         InputNames = readNameOffsetTable(f,HEADER[7],HEADER[1],MODE)
         MoveNames = readNameOffsetTable(f,HEADER[9],HEADER[2],MODE)
         CancelListNames = readNameOffsetTable(f,HEADER[11],HEADER[3],MODE)
-
+        ScriptNames,VFXScriptNames = bac.BACFile.readNames(filename[0:-4]+".bac")
         #print( ChargeNames)
         #print( InputNames)
         #print( MoveNames)
         #print( CancelListNames)
         '''Read Charges'''
         f.seek(HEADER[4])
-        self["Charges"] = {}
+        self["Charges"] = OrderedDict()
         for i in range(0,HEADER[0]):
             charge = {}
             #charge["Name"] = ChargeNames[i]
@@ -70,63 +87,76 @@ class BCMFile(OrderedDict):
             count =  struct.unpack(MODE+"I",f.read(4))[0]
             for j in range(0,count):
                 entry = {}
-                entry["Type"] = ["NORMAL","CHARGE","360","MASH"][struct.unpack(MODE+"H",f.read(2))[0]]
+                entry["Type"] = struct.unpack(MODE+"H",f.read(2))[0]
                 entry["Buffer"] = struct.unpack(MODE+"H",f.read(2))[0]
-                entry["Input"] = flags(InputEnum,struct.unpack(MODE+"H",f.read(2))[0])
+                entry["Input"] = struct.unpack(MODE+"H",f.read(2))[0]
 
                 entry["MoveFlags"] = struct.unpack(MODE+"H",f.read(2))[0]
                 entry["Flags"] = struct.unpack(MODE+"H",f.read(2))[0]
-                entry["Requirement"] = flags({0:"Normal",1:"Lenient",2:"Mash"},struct.unpack(MODE+"H",f.read(2))[0])
-
+                entry["Requirement"] = struct.unpack(MODE+"H",f.read(2))[0]
+                if PRETTY:
+                    entry["Type"] = ["NORMAL","CHARGE","360","MASH"][entry["Type"]]
+                    entry["Input"] = flags(InputEnum,entry["Input"])
+                    entry["Requirement"] = flags({0:"Normal",1:"Lenient",2:"Mash"},entry["Requirement"])
                 input.append(entry)
             self["Inputs"][InputNames[i]] = input
         '''Read MOVES'''
 
-        self["Moves"] = {}
+        self["Moves"] = OrderedDict()
         for i in range(0,HEADER[2]):
             f.seek(HEADER[8]+i*0x54)
-            moves= OrderedDict()
+            move= OrderedDict()
             #charge["Name"] = ChargeNames[i]
-            moves["Input"] = flags(InputEnum,struct.unpack(MODE+"H",f.read(2))[0])
-            moves["MoveFlags"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["PositionRestriction"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["Restriction"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["Unknown1"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["StateRestriction"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["Unknown2"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["MiscRestriction"] = struct.unpack(MODE+"B",f.read(1))[0]
-            moves["Unknown3"] = struct.unpack(MODE+"B",f.read(1))[0]
-            moves["UltraRestriction"] = struct.unpack(MODE+"B",f.read(1))[0]
-            moves["UltraRestriction?"] = struct.unpack(MODE+"3B",f.read(3))[0]
-            moves["PositionRestrictionDistance"] = struct.unpack(MODE+"f",f.read(4))[0]
-            moves["EXRequirement"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["EXCost"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["UltraRequirement"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["UltraCost"] = struct.unpack(MODE+"H",f.read(2))[0]
-            
-            moves["InputMotion"] = struct.unpack(MODE+"i",f.read(4))[0]
-            if moves["InputMotion"] != -1:
-                moves["InputMotion"] = InputNames[moves["InputMotion"]]
-                '''
-            moves["AIMoveFeatures"] = struct.unpack(MODE+"I",f.read(4))[0]
-            moves["AIMinRange"] = struct.unpack(MODE+"f",f.read(4))[0]
-            moves["AIMaxrange"] = struct.unpack(MODE+"f",f.read(4))[0]
-            moves["AIUnknown1"] = struct.unpack(MODE+"I",f.read(4))[0]
-            moves["CPUPassiveMove"] = struct.unpack(MODE+"I",f.read(4))[0]
-            moves["CPUCounterMove"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["CPUVsStand"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["CPUVsAir"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["CPUVsDown"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["CPUVsStunned"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["CPUProbeMove"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["CPUVsVeryClose"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["CPUVsClose"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["CPUVsMidRange"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["CPUVsFar"] = struct.unpack(MODE+"H",f.read(2))[0]
-            moves["CPUVsVeryFar"] = struct.unpack(MODE+"H",f.read(2))[0]
-            '''
+            move["Input"] = flags(InputEnum,struct.unpack(MODE+"H",f.read(2))[0])
+            move["MoveFlags"] = flags(MoveFlags,struct.unpack(MODE+"H",f.read(2))[0])
+            move["PositionRestriction"] = enum({0:"NONE",1:"FAR",2:"CLOSE",3:"HIGH",4:"LOW"},struct.unpack(MODE+"H",f.read(2))[0])
+            move["Restriction"] = flags(RestrictionFlags,struct.unpack(MODE+"H",f.read(2))[0])
 
-            self["Moves"][MoveNames[i]] = moves
+            move["Unknown1"] = struct.unpack(MODE+"H",f.read(2))[0]
+            move["StateRestriction"] = flags({0:"NONE",4:"AIR"},struct.unpack(MODE+"H",f.read(2))[0])
+            move["Unknown2"] = struct.unpack(MODE+"H",f.read(2))[0]
+            move["MiscRestriction"] = struct.unpack(MODE+"B",f.read(1))[0]
+
+            move["Unknown3"] = struct.unpack(MODE+"B",f.read(1))[0]
+            move["UltraRestriction"] = struct.unpack(MODE+"B",f.read(1))[0]
+            move["UltraRestriction?"] = struct.unpack(MODE+"3B",f.read(3))[0]
+            move["PositionRestrictionDistance"] = struct.unpack(MODE+"f",f.read(4))[0]
+
+            move["EXRequirement"] = struct.unpack(MODE+"h",f.read(2))[0]
+            move["EXCost"] = struct.unpack(MODE+"h",f.read(2))[0]
+            move["UltraRequirement"] = struct.unpack(MODE+"h",f.read(2))[0]
+            move["UltraCost"] = struct.unpack(MODE+"h",f.read(2))[0]
+
+            move["InputMotion"] = struct.unpack(MODE+"i",f.read(4))[0]
+            if move["InputMotion"] != -1:
+               move["InputMotion"] = InputNames[move["InputMotion"]]
+            move["Script"] = enum(dict(enumerate(ScriptNames)),struct.unpack(MODE+"I",f.read(4))[0])
+           
+            if not PRETTY:
+                move["AIMoveFeatures"] = struct.unpack(MODE+"I",f.read(4))[0]
+                move["AIMinRange"] = struct.unpack(MODE+"f",f.read(4))[0]
+                move["AIMaxrange"] = struct.unpack(MODE+"f",f.read(4))[0]
+                move["AIUnknown1"] = struct.unpack(MODE+"I",f.read(4))[0]
+
+                move["CPUPassiveMove"] = struct.unpack(MODE+"I",f.read(4))[0]
+                move["CPUCounterMove"] = struct.unpack(MODE+"H",f.read(2))[0]
+                move["CPUVsStand"] = struct.unpack(MODE+"H",f.read(2))[0]
+                move["CPUVsAir"] = struct.unpack(MODE+"H",f.read(2))[0]
+
+                move["CPUVsDown"] = struct.unpack(MODE+"H",f.read(2))[0]
+                move["CPUVsStunned"] = struct.unpack(MODE+"H",f.read(2))[0]
+                move["CPUProbeMove"] = struct.unpack(MODE+"H",f.read(2))[0]
+                move["CPUVsVeryClose"] = struct.unpack(MODE+"H",f.read(2))[0]
+
+                move["CPUVsClose"] = struct.unpack(MODE+"H",f.read(2))[0]
+                move["CPUVsMidRange"] = struct.unpack(MODE+"H",f.read(2))[0]
+                move["CPUVsFar"] = struct.unpack(MODE+"H",f.read(2))[0]
+                move["CPUVsVeryFar"] = struct.unpack(MODE+"H",f.read(2))[0]
+            if PRETTY:
+                pass
+            
+
+            self["Moves"][MoveNames[i]] = move
         '''Read Cancels'''
 
         self["CancelLists"] = {}
@@ -144,7 +174,65 @@ class BCMFile(OrderedDict):
                 else:
                     cancellist.append(index)
             self["CancelLists"][CancelListNames[i]] = cancellist
+    def toFile(self,filename,console=True):
+        out = open(filename,"wb")
+        out.write(b"#BCM")
+        MODE = "<"
+        if console:
+            MODE = ">"
+        out.write(struct.pack(MODE+"H",0xFFFE))
+        
+        out.write(struct.pack(MODE+"5H",40, 1, 1, 0, 0))
+        out.seek(40,1)
+        
+        HEADER = []
+        HEADER.append(len(self["Charges"]))
+        HEADER.append(len(self["Inputs"]))
+        HEADER.append(len(self["Moves"]))
+        HEADER.append(len(self["CancelLists"]))
+        
+        #
+        # Write Charges
+        #
+        if len(self["Charges"]) == 0:
+            HEADER.append(0)
+        else:
+            HEADER.append(out.tell())
+            for name,charge in self["Charges"].items():
+                out.write(struct.pack(MODE+"6HI", \
+                    charge["Input"],charge["Unknown1"],charge["MoveFlags"],charge["Frames"],charge["Frames2"],charge["Unknown3"],charge["StorageIndex"]))
+        #
+        # Write Inputs
+        #
+        
+        #
+        # Write Moves
+        #
+        if len(self["Moves"]) == 0:
+            HEADER.append(0)
+        else:
+            HEADER.append(out.tell())
+            for name,move in self["Moves"].items():
+                out.write(struct.pack(MODE+"4H4H4Bf4HiIIffIIHHHHHHHHHHH",\
+                   move["Input"],move["MoveFlags"],move["PositionRestriction"],move["Restriction"],\
+                   move["Unknown1"],move["StateRestriction"],move["Unknown2"],move["MiscRestriction"],\
+                   move["Unknown3"],move["UltraRestriction"],move["UltraRestriction?"],move["PositionRestrictionDistance"],\
+                   move["EXRequirement"],move["EXCost"],move["UltraRequirement"],move["UltraCost"],\
+                   move["AIMoveFeatures"],move["AIMinRange"],move["AIMaxrange"],move["AIUnknown1"],\
+                   move["CPUPassiveMove"],move["CPUCounterMove"],move["CPUVsStand"],move["CPUVsAir"],\
+                   move["CPUVsDown"],move["CPUVsStunned"],move["CPUProbeMove"],move["CPUVsVeryClose"],\
+                   move["CPUVsClose"],move["CPUVsMidRange"],move["CPUVsFar"],move["CPUVsVeryFar"]))
+                    
 
+                
+                
+        for i in range(0,6):
+            HEADER.append(0)
+        out.seek(0x10)
+        out.write(struct.pack(MODE+"4H8I",*HEADER))
+        out.close()
+        
+    
 def doAll():
     for char in os.listdir(PC_PATH):
         print( char)
@@ -174,7 +262,7 @@ def doAll():
                 f.write(line)
                 f.write("\n")
             f.close()
-        print( json.dumps(versions, indent=5))
+        #print( json.dumps(versions, indent=5))
 
 def doChar(c):
     pc = BCMFile(PC_PATH+c+"\\"+c+".bcm")

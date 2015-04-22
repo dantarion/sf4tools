@@ -23,15 +23,16 @@ HEADER = '''
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
         <style type="text/css">
-        table.diff {{font-family:Courier; border:medium;}}
+        table.diff {{font-family:Consolas; border:medium;}}
         .diff_header {{background-color:#e0e0e0}}
         td.diff_header {{text-align:right}}
         .diff_next {{background-color:#c0c0c0}}
         .diff_add {{background-color:#aaffaa}}
         .diff_chg {{background-color:#ffff77}}
         .diff_sub {{background-color:#ffaaaa}}
-        .panel {{margin:25px}}
-        .anchor {{display: block; position: relative; top: -60px; visibility: hidden;}}
+        .panel {{margin:10px}}
+        .panel .panel {{margin:5px}}
+        .anchor {{display: block; position: relative; top: -100px; visibility: hidden;}}
     </style>
   </head>
   <body>
@@ -58,6 +59,7 @@ HEADER = '''
                 <li><a href="{0}_SUPER_TO_AE.html">SUPER_TO_AE</a></li>
                 <li><a href="{0}_AE_TO_AE2012.html">AE_TO_AE2012</a></li>
                 <li><a href="{0}_AE2012_TO_ULTRA.html">AE2012_TO_ULTRA</a></li>
+                <li><a href="{0}_ULTRA_TO_ULTRA104.html"></a></li>
               </ul>
             </li>
             <li class="divider"></li>
@@ -73,16 +75,7 @@ HEADER = '''
 
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        <li><a href="#">Link</a></li>
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
-          <ul class="dropdown-menu">
-            <li><a href="#Floats">Action</a></li>
-            <li><a href="#Scripts">Another action</a></li>
-            <li><a href="#VFXScripts">Something else here</a></li>
-            <li><a href="#HitboxTable">Something else here</a></li>
-          </ul>
-        </li>
+        <li><a href="http://twitter.com/dantarion">Contact @dantarion!</a></li>
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
@@ -176,7 +169,7 @@ def diffCollections(col1,col2,log,level=0):
         except Exception:
             pass
         log.write("<div class='panel panel-danger'>");
-        log.write("<div id='change-{0}{1}' class='panel-heading'>Removed {1}</div>".format(removed,fancyName))
+        log.write("<span class='anchor'  id='change-{0}{1}'></span><div class='panel-heading'>Removed {1}</div>".format(removed,fancyName))
         log.write("<div class='panel-body'><pre>")
         log.write(json.dumps(col1[removed],indent=5))
         log.write("</pre></div></div>")
@@ -187,7 +180,8 @@ def diffCollections(col1,col2,log,level=0):
         except Exception:
             pass
         log.write("<div class='panel panel-success'>");
-        log.write("<div id='change-{0}{1}' class='panel-heading'>Added {1}</div>".format(added,fancyName))
+        
+        log.write("<span class='anchor'  id='change-{0}{1}'></span><div class='panel-heading'>Added {1}</div>".format(added,fancyName))
         log.write("<div class='panel-body'><pre>")
         log.write(json.dumps(col2[added],indent=5))
         log.write("</pre></div></div>")
@@ -203,7 +197,7 @@ def diffCollections(col1,col2,log,level=0):
             pass
 
         log.write("<div class='panel panel-warning'>");
-        log.write("<div id='change-{0}{1}' class='panel-heading'>Changed {1}</div><div class='panel-body'>".format(both,fancyName))
+        log.write("<span class='anchor'  id='change-{0}{1}'></span><div class='panel-heading'>Changed {1}</div><div class='panel-body'>".format(both,fancyName))
         if type(col1[both]) is dict or type(col1[both]) is OrderedDict:
             diffCollections(col1[both],col2[both],log,level+1)
         else:
@@ -230,13 +224,14 @@ def dumpChar(char):
     AE2012 = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\patch\\battle\\regulation\\latest_ae\\"
     version_names = ["SUPER","AE","AE2012"]
     versions = [SUPER,AE,AE2012]
+    
     for i,ver in enumerate(versions):
 
-        log = open("../html/json/"+char+"."+version_names[i]+".bac.txt","w")
+        log = open("../json/"+char+"."+version_names[i]+".bac.json","w")
         BAC= bac.BACFile(versions[i]+postfix+".bac")
         log.write(BAC.toJSON())
         log.close()
-        log = open("../html/json/"+char+"."+version_names[i]+".bcm.txt","w")
+        log = open("../json/"+char+"."+version_names[i]+".bcm.json","w")
         BCM= bcm.BCMFile(versions[i]+postfix+".bcm")
         log.write(BCM.toJSON())
         log.close()
@@ -250,19 +245,60 @@ def compareChar(char):
     AE = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\dlc\\03_character_free\\battle\\regulation\\latest\\"
     AE2012 = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\patch\\battle\\regulation\\latest_ae\\"
     ULTRA = "M:\\Xbox\\Ultra Xbox\\content\\04_ae2\\battle\\regulation\\ae2\\"
-    versions = [VANILLA,SUPER,AE,AE2012,ULTRA]
+    ULTRA_TU1 = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Super Street Fighter IV - Arcade Edition\\patch_ae2_tu1\\battle\\regulation\\ae2_109\\"
+    ULTRA_TU2 = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Super Street Fighter IV - Arcade Edition\\patch_ae2_tu1b\\battle\\regulation\\ae2_109b\\"
+    ULTRA_TU3 = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Super Street Fighter IV - Arcade Edition\\patch_ae2_tu2\\battle\\regulation\\ae2_110\\"
+    #versions = [VANILLA,SUPER,AE,AE2012,ULTRA,ULTRA_TU1,ULTRA_TU2,ULTRA_TU3]
+    bacs = {}
+    bcms = {}
+    #if char not in ["SGT","CHB"]:
+    #    return
+    #VANILLA,SUPER,AE,AE2012,
+    #"VANILLA","SUPER","AE","AE2012"
+    versions = [ULTRA_TU1,ULTRA_TU3]
+    names = ["ULTRA_TU1","ULTRA_TU3"]
+    
+    if os.path.isfile(ULTRA_TU2+postfix+".bac"):
+        return
+    
+    for i,version in enumerate(versions):
+
+        if not os.path.isfile(version+postfix+".bac"):
+            continue
+        if os.path.isfile( "../json/"+char+"_"+names[i]+".bac.json"):
+            pass
+        print("\t"+names[i])
+        tmp = bac.BACFile(version+postfix+".bac")
+        log = open("../json/"+char+"_"+names[i]+".bac.json","w")
+        log.write(tmp.toJSON())
+        bacs[i] = tmp
+        log.close()
+        
+        tmp = bcm.BCMFile(version+postfix+".bcm")
+        log = open("../json/"+char+"_"+names[i]+".bcm.json","w")
+        log.write(tmp.toJSON())
+        #tmp.toFile("../out/"+char+"_"+names[i]+".bcm")
+        bcms[i] = tmp
+        log.close()
+        
+    
     for i in range(0,len(versions)-1):
-        names = ["VANILLA","SUPER","AE","AE2012","ULTRA"]
+        
         name = names[i]+"_TO_"+names[i+1]
-        print("Doing ",name)
+        
         if not os.path.isfile(versions[i]+postfix+".bac"):
             continue
+        if os.path.isfile( "../html/"+char+"_"+name+".html"):
+            pass
+        print("\tDoing ",name)
         log = open("../html/"+char+"_"+name+".html","w")
         log.write(HEADER.format(char,name))
-        firstBAC= bac.BACFile(versions[i]+postfix+".bac")
-        secondBAC = bac.BACFile(versions[i+1]+postfix+".bac")
-        firstBCM= bcm.BCMFile(versions[i]+postfix+".bcm")
-        secondBCM = bcm.BCMFile(versions[i+1]+postfix+".bcm")
+        if len(bacs) < 2 or len(bcms) < 2:
+            return;
+        firstBAC= bacs[i]
+        secondBAC = bacs[i+1]
+        firstBCM= bcms[i]
+        secondBCM = bcms[i+1]
         for k in firstBCM.keys():
             log.write("<a class='anchor' id='"+k+"'></a><h2>"+k+"</h2>")
             if type(firstBCM[k]) is list:
@@ -313,8 +349,9 @@ def compareChar(char):
 
 
 import os
-#compareChar("RYU")
-for char in os.listdir(util.PC_PATH):
+#compareChar("RLN")
+#compareChar("SGT")
+for char in os.listdir("M:\\Xbox\\Ultra Xbox\\content\\04_ae2\\battle\\regulation\\ae2\\"):
    print(char)
    compareChar(char)
 
