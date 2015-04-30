@@ -1,0 +1,12 @@
+# Site settings
+title: UltraDiff
+email: dantarion@gmail.com
+description: > # this means to ignore newlines until "baseurl:"
+  Automated diff's of Ultra Street Fighter 4 patches
+baseurl: "" # the subpath of your site, e.g. /blog/
+url: "http://yourdomain.com" # the base hostname & protocol for your site
+twitter_username: dantarion
+github_username:  dantarion
+
+# Build settings
+markdown: kramdown
