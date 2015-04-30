@@ -3,9 +3,31 @@ layout: default
 ---
 
 <div class="home">
-
-  <h1 class="page-heading">Posts</h1>
-
+  <table class="table table-bordered table-condensed table-hover">
+	<tr>
+		<th>Character</th>
+		<th class="vertical" ><div>Super SF4</div></th>
+		<th class="vertical" colspan="2"><div>AE</div></th>
+		<th class="vertical" colspan="2"><div>AE2012</div></th>
+		<th class="vertical" colspan="2"><div>AE2012 v1.01</div></th>
+		<th class="vertical" colspan="2" ><div>AE2012 v1.04</div></th>
+		<th class="vertical" colspan="2"><div>Ultra v1.02</div></th>
+		<th class="vertical" colspan="2"><div>Ultra v1.03</div></th>
+		<th class="vertical" colspan="2"><div>Ultra v1.04</div></th>
+		<th class="vertical" ><div>Ultra v1.05</div></th>
+	</tr>
+	<tr>
+		<th>Example</th>
+		<td colspan="2" class="success">diff</td>
+		<td colspan="2">&#8212;</td>
+		<td colspan="2">&#8212;</td>
+		<td colspan="2">&#8212;</td>
+		<td colspan="2">&#8212;</td>
+		<td colspan="2">&#8212;</td>
+		<td colspan="2">&#8212;</td>
+		<td colspan="2">&#8212;</td>
+	</tr>
+  </table>
   <ul class="post-list">
     {% for post in site.posts %}
       <li>
