@@ -20,8 +20,8 @@
 	jQuery(window).load(function(){
 			 // load the overlay
 			if (document.cookie.indexOf('visited=true') == -1) {
-				var fifteenDays = 1000*60*60*24*15;
-				var expires = new Date((new Date()).valueOf() + fifteenDays);
+				var timeout = 1000*60*60*24*1;
+				var expires = new Date((new Date()).valueOf() + timeout);
 				document.cookie = "visited=true;expires=" + expires.toUTCString();
 				jQuery("#modal").modal({width:"580px", inline:true, href:"#modal"});
 			}
