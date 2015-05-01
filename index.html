@@ -8,7 +8,8 @@ layout: default
   It uses the fact that all files from previous patches are present on PC versions of the game to create a list of raw differences between the files.
   As a result, the resulting data can be a little complicated to understand, but its all accurate, and sometimes changes that Capcom doesn't list have ended up happening!
   Think of this page as a way to get insight into how these patches are coded and delievered to us, and a way to check for hidden tech that has popped up in the game that no one may know about! <strong>-dantarion</strong></p>
-  <p><strong>Shotouts to @Eternal0Star, who always hounds me about getting the patch diffs up quickly, as he is the one that takes this automated data and presents it to the world in laymans terms!</strong></p>
+  <p><small>Source code that generates this site is availible at <a href="http://dantarion.github.io/sf4tools/">dantarion.github.io/sf4tools</a></small>
+  <p><strong>Shoutouts to @Eternal0Star, who always hounds me about getting the patch diffs up quickly, as he is the one that takes this automated data and presents it to the world in laymans terms!</strong></p>
   <table class="table table-bordered table-condensed table-hover">
 	<tr>
 		<th class="brright">Character</th>
@@ -44,18 +45,15 @@ layout: default
 		<td colspan="2" class="brleft">&#8212;</td>
 	</tr>
   </table>
-  <ul class="post-list">
-    {% for post in site.posts %}
-      <li>
-        <span class="post-meta">{{ post.date | date: "%b %-d, %Y" }}</span>
-
-        <h2>
-          <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
-        </h2>
-      </li>
-    {% endfor %}
-  </ul>
-
+  <h3>Updates</h3>
+	<div class="list-group">
+	{% for post in site.posts %}
+		<a href="{{ post.url | prepend: site.baseurl }}" class="list-group-item active">
+	<h4 class="list-group-item-heading">{{ post.title }}</h4>
+	<p class="list-group-item-text">{{ post.date | date: "%b %-d, %Y" }}</p>
+	</a>
+	{% endfor %}
+	</div>
   <p class="rss-subscribe">subscribe <a href="{{ "/feed.xml" | prepend: site.baseurl }}">via RSS</a></p>
 
 </div>
