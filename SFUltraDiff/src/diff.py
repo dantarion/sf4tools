@@ -118,14 +118,7 @@ def dumpChar(char):
         log.write(BCM.toJSON())
         log.close()
         
-    
-def compareChar(char):
-    html = "<tr>"
-    postfix = char+"\\"+char
-    BASE = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\"
-    OUT = "D:\\sf4tools\\gh-pages\\"
-    if not os.path.exists(OUT+"characters\\"+char):
-        os.makedirs(OUT+"characters\\"+char)
+def getVersionData():
     paths = []
     names = []
     paths.append("resource\\battle\\chara")
@@ -148,6 +141,51 @@ def compareChar(char):
     names.append("Ultra v1.04")
     paths.append("patch_ae2_tu3\\battle\\regulation\\ae2_111")
     names.append("Ultra v1.05")
+    return paths, names
+def rebuildIndex():
+    paths, names = getVersionData()
+    OUT = "D:\\sf4tools\\gh-pages\\"
+    index = open(OUT+"_includes\\table.html","w")
+    charcount = 0
+    for char in os.listdir("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\dlc\\04_ae2\\battle\\regulation\\ae2"):
+        if charcount % 15 == 0:
+            index.write( """	<tr>
+		<th class="brright">Character</th>
+		<th class="vertical" ><div>Super</div></th>
+		<th class="vertical" colspan="2"><div>AE</div></th>
+		<th class="vertical" colspan="2"><div>AE2012</div></th>
+		<th class="vertical" colspan="2"><div>AE2012 v1.01</div></th>
+		<th class="vertical" colspan="2" ><div>AE2012 v1.04</div></th>
+		<th class="vertical" colspan="2"><div>Ultra v1.02</div></th>
+		<th class="vertical" colspan="2"><div>Ultra v1.03</div></th>
+		<th class="vertical" colspan="2"><div>Ultra v1.03b</div></th>
+		<th class="vertical" colspan="2"><div>Ultra v1.04</div></th>
+		<th class="vertical" ><div>Ultra v1.05</div></th>
+		<th class="vertical brleft" ><div>Vanilla v1.02</div></th>
+		<th class="vertical" colspan="2"><div>Vanilla v1.03</div></th>
+		<th class="vertical" ><div>Vanilla v1.04</div></th>
+		<th class="vertical brleft" ><div>Omega v1.04</div></th>
+		<th class="vertical" ><div>Omega v1.05</div></th>
+	</tr>""")
+        charcount += 1
+        print(char)
+        index.write("<tr><th>{0}</th>".format(char))
+        for i in range(0,len(names)-1):
+            name = names[i]+"_TO_"+names[i+1]
+            if not os.path.exists(OUT+"characters\\"+char+"\\"+name+".html"):
+                index.write('<td colspan="2">&#8212;</td>')
+            else:
+                index.write('<td colspan="2" class="success"><a href="{{{{ site.baseurl }}}}{0}">diff</a></td>'.format("characters\\"+char+"\\"+name+".html"))
+        index.write("</tr>")
+    index.close()
+def compareChar(char, index=None):
+    html = "<tr>"
+    postfix = char+"\\"+char
+    BASE = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\"
+    OUT = "D:\\sf4tools\\gh-pages\\"
+    if not os.path.exists(OUT+"characters\\"+char):
+        os.makedirs(OUT+"characters\\"+char)
+    paths, names = getVersionData()
     #paths.append("dlc\\04_ae2\\battle\\regulation\\sf4")
     #names.append("Edition Select Vanilla Characters Release")
     #paths.append("patch_ae2_tu1\\battle\\regulation\\sf4_109")
@@ -252,9 +290,12 @@ def compareChar(char):
 
 
 import os
+
 #compareChar("RYU")
 #compareChar("SGT")
-for char in os.listdir("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\dlc\\04_ae2\\battle\\regulation\\ae2"):
-   print(char)
-   compareChar(char)
 
+#for char in os.listdir("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\dlc\\04_ae2\\battle\\regulation\\ae2"):
+#   print(char)
+#   compareChar(char,index)
+
+rebuildIndex()
