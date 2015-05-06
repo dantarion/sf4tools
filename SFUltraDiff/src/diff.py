@@ -4,6 +4,9 @@ import sys
 import util
 import difflib
 from collections import OrderedDict
+OUT = "../../../sf4tools-gh-pages/"
+BASE = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\"
+
 HEADER = '''---
 layout: default
 ---
@@ -98,26 +101,7 @@ def diffCollections(col1,col2,log,level=0):
                 log.write( json.dumps(col2[both],indent=5))
                 log.write("</pre></div>")
                 log.write("</div>")
-        log.write("</div></div>")
-def dumpChar(char):
-    postfix = char+"\\"+char
-    SUPER = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\resource\\battle\\chara\\"
-    AE = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\dlc\\03_character_free\\battle\\regulation\\latest\\"
-    AE2012 = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\patch\\battle\\regulation\\latest_ae\\"
-    version_names = ["SUPER","AE","AE2012"]
-    versions = [SUPER,AE,AE2012]
-    
-    for i,ver in enumerate(versions):
-
-        log = open("../json/"+char+"."+version_names[i]+".bac.json","w")
-        BAC= bac.BACFile(versions[i]+postfix+".bac")
-        log.write(BAC.toJSON())
-        log.close()
-        log = open("../json/"+char+"."+version_names[i]+".bcm.json","w")
-        BCM= bcm.BCMFile(versions[i]+postfix+".bcm")
-        log.write(BCM.toJSON())
-        log.close()
-        
+        log.write("</div></div>")        
 def getVersionData():
     paths = []
     names = []
@@ -132,11 +116,11 @@ def getVersionData():
     paths.append("patch\\battle\\regulation\\v104")
     names.append("AE2012 v1.04")
     paths.append("dlc\\04_ae2\\battle\\regulation\\ae2")
-    names.append("Ultra v1.02")
+    names.append("Ultra v1.01")
     paths.append("patch_ae2_tu1\\battle\\regulation\\ae2_109")
-    names.append("Ultra v1.03")
+    names.append("Ultra v1.02")
     paths.append("patch_ae2_tu1b\\battle\\regulation\\ae2_109b")
-    names.append("Ultra v1.03b")
+    names.append("Ultra v1.03")
     paths.append("patch_ae2_tu2\\battle\\regulation\\ae2_110")
     names.append("Ultra v1.04")
     paths.append("patch_ae2_tu3\\battle\\regulation\\ae2_111")
@@ -144,10 +128,10 @@ def getVersionData():
     return paths, names
 def rebuildIndex():
     paths, names = getVersionData()
-    OUT = "D:\\sf4tools\\gh-pages\\"
+    global OUT, BASE
     index = open(OUT+"_includes\\table.html","w")
     charcount = 0
-    for char in os.listdir("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\dlc\\04_ae2\\battle\\regulation\\ae2"):
+    for char in os.listdir(BASE+"\\dlc\\04_ae2\\battle\\regulation\\ae2"):
         if charcount % 15 == 0:
             index.write( """	<tr>
 		<th class="brright">Character</th>
@@ -156,47 +140,43 @@ def rebuildIndex():
 		<th class="vertical" colspan="2"><div>AE2012</div></th>
 		<th class="vertical" colspan="2"><div>AE2012 v1.01</div></th>
 		<th class="vertical" colspan="2" ><div>AE2012 v1.04</div></th>
+		<th class="vertical" colspan="2"><div>Ultra v1.01</div></th>
 		<th class="vertical" colspan="2"><div>Ultra v1.02</div></th>
 		<th class="vertical" colspan="2"><div>Ultra v1.03</div></th>
-		<th class="vertical" colspan="2"><div>Ultra v1.03b</div></th>
 		<th class="vertical" colspan="2"><div>Ultra v1.04</div></th>
 		<th class="vertical" ><div>Ultra v1.05</div></th>
-		<th class="vertical brleft" ><div>Vanilla v1.02</div></th>
-		<th class="vertical" colspan="2"><div>Vanilla v1.03</div></th>
-		<th class="vertical" ><div>Vanilla v1.04</div></th>
-		<th class="vertical brleft" ><div>Omega v1.04</div></th>
-		<th class="vertical" ><div>Omega v1.05</div></th>
 	</tr>""")
+    
         charcount += 1
         print(char)
         index.write("<tr><th>{0}</th>".format(char))
-        for i in range(0,len(names)-1):
-            name = names[i]+"_TO_"+names[i+1]
-            if not os.path.exists(OUT+"characters\\"+char+"\\"+name+".html"):
-                index.write('<td colspan="2">&#8212;</td>')
-            else:
-                index.write('<td colspan="2" class="success"><a href="{{{{ site.baseurl }}}}{0}">diff</a></td>'.format("characters\\"+char+"\\"+name+".html"))
+        i = 0
+        while i < len(names)-1:
+            found = False
+            for g in range(i+1,len(names)):
+                name = names[i]+"_TO_"+names[g]
+                pname = names[i]+" > "+names[g]
+                if not os.path.exists(OUT+"characters\\"+char+"\\"+name+".html"):
+                    pass
+                    #index.write('<td colspan="2">&#8212;</td>')
+                else:
+                    found = True
+                    index.write('<td colspan="{1}" class="success"><a href="{{{{ site.baseurl }}}}{0}">{2}</a></td>'.format("characters/"+char+"/"+name+".html",(g-i)*2,pname))
+                    i = g-1
+                    break
+            if not found:
+                index.write('<td colspan="{0}">&#8212;</td>'.format(2))
+            i += 1
         index.write("</tr>")
     index.close()
 def compareChar(char, index=None):
     html = "<tr>"
     postfix = char+"\\"+char
-    BASE = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\"
-    OUT = "D:\\sf4tools\\gh-pages\\"
+    
+    global BASE, OUT
     if not os.path.exists(OUT+"characters\\"+char):
         os.makedirs(OUT+"characters\\"+char)
-    paths, names = getVersionData()
-    #paths.append("dlc\\04_ae2\\battle\\regulation\\sf4")
-    #names.append("Edition Select Vanilla Characters Release")
-    #paths.append("patch_ae2_tu1\\battle\\regulation\\sf4_109")
-    #names.append("Edition Select Vanilla Characters Title Update 1 (1.03)")
-    #paths.append("patch_ae2_tu2\\battle\\regulation\\sf4_110")
-    #names.append("Edition Select Vanilla Characters Title Update 2 (1.04)")
-    #paths.append("patch_ae2_tu2\\battle\\regulation\\concept")
-    #names.append("Omega Mode")
-    #paths.append("patch_ae2_tu3\\battle\\regulation\\concept_111")
-    #names.append("Omega Mode Title Update 1 (1.05)")
-    
+    paths, names = getVersionData() 
     
     bacs = []
     bcms = []
@@ -296,6 +276,6 @@ import os
 
 #for char in os.listdir("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Street Fighter IV - Arcade Edition\\dlc\\04_ae2\\battle\\regulation\\ae2"):
 #   print(char)
-#   compareChar(char,index)
+#   compareChar(char)
 
 rebuildIndex()
